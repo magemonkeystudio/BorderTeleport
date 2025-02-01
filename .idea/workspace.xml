@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="664299b5-4cea-4a6b-a0ec-72b6d4e2800c" name="Changes" comment="Lets get started">
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/libs/spigot-1.21.3.jar" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/yourplugin/BorderCommand.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/yourplugin/BorderTeleport.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/config.yml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/resources/plugin.yml" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
+  <component name="ProjectId" id="2sKXtdlQyI55VJjnN6dqfDL9RtS" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Downloaded.Files.Path.Enabled": "false",
+    "Maven.BorderPlugin [clean].executor": "Run",
+    "Maven.BorderPlugin [package].executor": "Run",
+    "Repository.Attach.Annotations": "false",
+    "Repository.Attach.JavaDocs": "false",
+    "Repository.Attach.Sources": "false",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "master",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/drew0/IdeaProjects/BorderPlugin/pom.xml",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Artifacts",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "run.code.analysis.last.selected.profile": "pProject Default",
+    "settings.editor.selected.configurable": "project.propVCSSupport.Mappings",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-125ca727e0f0-intellij.indexing.shared.core-IU-243.23654.189" />
+        <option value="bundled-js-predefined-d6986cc7102b-822845ee3bb5-JavaScript-IU-243.23654.189" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="664299b5-4cea-4a6b-a0ec-72b6d4e2800c" name="Changes" comment="" />
+      <created>1738205455425</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1738205455425</updated>
+      <workItem from="1738205456479" duration="2098000" />
+      <workItem from="1738207904320" duration="1377000" />
+      <workItem from="1738210593023" duration="642000" />
+      <workItem from="1738212037492" duration="9959000" />
+      <workItem from="1738253081667" duration="265000" />
+      <workItem from="1738253352280" duration="1050000" />
+      <workItem from="1738254429512" duration="336000" />
+      <workItem from="1738254779069" duration="2823000" />
+      <workItem from="1738257656918" duration="44000" />
+      <workItem from="1738257828755" duration="964000" />
+      <workItem from="1738258804742" duration="4024000" />
+      <workItem from="1738263565921" duration="351000" />
+      <workItem from="1738263925979" duration="245000" />
+      <workItem from="1738264179164" duration="44000" />
+      <workItem from="1738264231451" duration="4898000" />
+      <workItem from="1738272748445" duration="1120000" />
+      <workItem from="1738288887999" duration="8610000" />
+      <workItem from="1738299023483" duration="1241000" />
+      <workItem from="1738334901579" duration="4074000" />
+      <workItem from="1738339005650" duration="783000" />
+      <workItem from="1738339798648" duration="346000" />
+      <workItem from="1738340151661" duration="1572000" />
+      <workItem from="1738341732244" duration="5744000" />
+      <workItem from="1738347521759" duration="2523000" />
+      <workItem from="1738350208273" duration="7399000" />
+      <workItem from="1738362031921" duration="2818000" />
+      <workItem from="1738378906026" duration="1570000" />
+      <workItem from="1738381009043" duration="1255000" />
+      <workItem from="1738382290072" duration="572000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Lets get started" />
+    <option name="LAST_COMMIT_MESSAGE" value="Lets get started" />
+  </component>
+</project>
