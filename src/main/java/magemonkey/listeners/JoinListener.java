@@ -1,3 +1,4 @@
+// JoinListener.java
 package magemonkey.listeners;
 
 import magemonkey.BorderTeleport;
@@ -17,15 +18,12 @@ public class JoinListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        PendingTeleport pending = plugin.getPendingTeleports().get(player.getUniqueId().toString());
+        PendingTeleport pending = plugin.getPendingTeleports().get(player.getUniqueId());
 
         if (pending != null) {
-            if (System.currentTimeMillis() - pending.getTimestamp() > plugin.getRequestTimeoutSeconds() * 1000) {
-                plugin.getPluginLogger().info("[BorderTeleport] Expired teleport request for player " + player.getName());
-                plugin.getPendingTeleports().remove(player.getUniqueId().toString());
-                plugin.getTeleportHandler().handleExpiredTeleport(player, pending);
-            } else {
-                plugin.getTeleportHandler().attemptPendingTeleport(player, pending);
+            if (pending.hasExpired(plugin.getRequestTimeoutSeconds(), plugin.getGracePeriodSeconds())) {
+                plugin.getLogger().info("Expired teleport request for player " + player.getName());
+                plugin.getPendingTeleports().remove(player.getUniqueId());
             }
         }
     }
