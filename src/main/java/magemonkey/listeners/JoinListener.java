@@ -17,20 +17,16 @@ public class JoinListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        PendingTeleport pending = plugin.pendingTeleports.get(player.getUniqueId());
+        PendingTeleport pending = plugin.getPendingTeleports().get(player.getUniqueId().toString());
 
         if (pending != null) {
-            if (pending.hasExpired(plugin.requestTimeoutSeconds, plugin.gracePeriodSeconds)) {
-                plugin.pendingTeleports.remove(player.getUniqueId());
-                plugin.logger.warning(String.format("[BorderTeleport] Expired teleport request for %s - handling with %s action",
-                        player.getName(), plugin.expireAction));
-
-                plugin.teleportHandler.handleExpiredTeleport(player, pending);
-                return;
+            if (System.currentTimeMillis() - pending.getTimestamp() > plugin.getRequestTimeoutSeconds() * 1000) {
+                plugin.getPluginLogger().info("[BorderTeleport] Expired teleport request for player " + player.getName());
+                plugin.getPendingTeleports().remove(player.getUniqueId().toString());
+                plugin.getTeleportHandler().handleExpiredTeleport(player, pending);
+            } else {
+                plugin.getTeleportHandler().attemptPendingTeleport(player, pending);
             }
-
-            // Attempt the teleport
-            plugin.teleportHandler.attemptPendingTeleport(player, pending);
         }
     }
 }

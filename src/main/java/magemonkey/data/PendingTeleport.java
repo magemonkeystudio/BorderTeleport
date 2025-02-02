@@ -1,47 +1,33 @@
 package magemonkey.data;
 
-import org.bukkit.Location;
-import org.bukkit.entity.Entity;
-
 public class PendingTeleport {
-    private final Location location;
-    private final long timestamp;
-    private int retryCount;
-    private long lastRetryTime;
-    private final MountData mountData;
+    private final long requestTime;
+    private final double x;
+    private final double z;
+    private final String targetServer;
 
-    public PendingTeleport(Location location, Entity mount) {
-        this.location = location;
-        this.timestamp = System.currentTimeMillis();
-        this.retryCount = 0;
-        this.lastRetryTime = System.currentTimeMillis();
-        this.mountData = mount != null ? new MountData(mount) : null;
+    public PendingTeleport(double x, double z, String targetServer) {
+        this.requestTime = System.currentTimeMillis();
+        this.x = x;
+        this.z = z;
+        this.targetServer = targetServer;
     }
 
     public boolean hasExpired(long timeoutSeconds, long gracePeriodSeconds) {
-        long totalTimeout = (timeoutSeconds + gracePeriodSeconds) * 1000;
-        return System.currentTimeMillis() - timestamp > totalTimeout;
+        long currentTime = System.currentTimeMillis();
+        long expirationTime = requestTime + (timeoutSeconds + gracePeriodSeconds) * 1000;
+        return currentTime > expirationTime;
     }
 
-    public boolean canRetry(long retryDelaySeconds, int maxRetries) {
-        if (retryCount >= maxRetries) return false;
-        return System.currentTimeMillis() - lastRetryTime >= retryDelaySeconds * 1000;
+    public double getX() {
+        return x;
     }
 
-    public void incrementRetry() {
-        retryCount++;
-        lastRetryTime = System.currentTimeMillis();
+    public double getZ() {
+        return z;
     }
 
-    public Location getLocation() {
-        return location;
-    }
-
-    public MountData getMountData() {
-        return mountData;
-    }
-
-    public int getRetryCount() {
-        return retryCount;
+    public String getTargetServer() {
+        return targetServer;
     }
 }
