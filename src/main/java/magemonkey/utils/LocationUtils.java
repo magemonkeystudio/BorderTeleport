@@ -1,10 +1,10 @@
-package com.yourplugin.utils;
+package magemonkey.utils;
 
+import magemonkey.BorderTeleport;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 public class LocationUtils {
-
     public static boolean isInSafeZone(BorderTeleport plugin, double x, double z) {
         // Check if the player is within safeZoneDistance blocks of any border
         return (Math.abs(x - plugin.minX) < plugin.safeZoneDistance ||
@@ -57,8 +57,7 @@ public class LocationUtils {
             safeLoc.setZ(plugin.minZ + plugin.pushbackDistance);
         }
 
-
-// Ensure the new location is safe
+        // Ensure the new location is safe
         safeLoc.setY(player.getWorld().getHighestBlockYAt(safeLoc.getBlockX(), safeLoc.getBlockZ()) + 1);
 
         return safeLoc;

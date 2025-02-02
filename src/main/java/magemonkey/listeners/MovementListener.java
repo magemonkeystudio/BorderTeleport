@@ -1,14 +1,14 @@
-package com.yourplugin.listeners;
+package magemonkey.listeners;
 
+import magemonkey.BorderTeleport;
+import magemonkey.utils.LocationUtils;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
-import utils.LocationUtils;
 
 public class MovementListener implements Listener {
-
     private final BorderTeleport plugin;
 
     public MovementListener(BorderTeleport plugin) {
@@ -17,8 +17,9 @@ public class MovementListener implements Listener {
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
-        if (event.getTo() == null || event.getFrom().getBlockX() == event.getTo().getBlockX()
-                && event.getFrom().getBlockZ() == event.getTo().getBlockZ()) {
+        if (event.getTo() == null ||
+                (event.getFrom().getBlockX() == event.getTo().getBlockX() &&
+                        event.getFrom().getBlockZ() == event.getTo().getBlockZ())) {
             return;
         }
 

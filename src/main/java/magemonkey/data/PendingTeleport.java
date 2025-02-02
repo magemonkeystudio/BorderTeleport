@@ -1,4 +1,4 @@
-package com.yourplugin.data;
+package magemonkey.data;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -33,7 +33,6 @@ public class PendingTeleport {
         lastRetryTime = System.currentTimeMillis();
     }
 
-    // Getters
     public Location getLocation() {
         return location;
     }

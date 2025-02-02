@@ -1,25 +1,30 @@
-package com.yourplugin.handlers;
+package magemonkey.handlers;
 
-import data.MountData;
-import data.PendingTeleport;
+import magemonkey.BorderTeleport;
+import magemonkey.data.PendingTeleport;
+import magemonkey.utils.LocationUtils;
+
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
+import org.bukkit.Attribute;
+import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Tameable;
+import org.bukkit.Location;
 import org.bukkit.scheduler.BukkitRunnable;
-import utils.LocationUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
 
 public class TeleportHandler {
-
     private final BorderTeleport plugin;
-    private Logger logger;
+    private final Logger logger;
 
     public TeleportHandler(BorderTeleport plugin) {
         this.plugin = plugin;
@@ -70,7 +75,6 @@ public class TeleportHandler {
 
     public void sendPlayerToServer(Player player, String server) {
         Location loc = player.getLocation();
-
         Entity mount = player.getVehicle();
 
         // First, send the player's location data through a custom plugin channel
@@ -114,7 +118,7 @@ public class TeleportHandler {
             out.writeShort(msgByteArray.length);
             out.write(msgByteArray);
 
-            player.sendPluginMessage(this, "BungeeCord", b.toByteArray());
+            player.sendPluginMessage(plugin, "BungeeCord", b.toByteArray());
         } catch (IOException e) {
             logger.severe(String.format("[BorderTeleport] Failed to send location data for %s: %s",
                     player.getName(), e.getMessage()));
@@ -131,7 +135,7 @@ public class TeleportHandler {
 
             out.writeUTF("Connect");
             out.writeUTF(server);
-            player.sendPluginMessage(this, "BungeeCord", b.toByteArray());
+            player.sendPluginMessage(plugin, "BungeeCord", b.toByteArray());
 
             logger.info(String.format("[BorderTeleport] Sending %s to server %s at location: %s",
                     player.getName(), server, LocationUtils.formatLocation(loc)));
@@ -210,12 +214,12 @@ public class TeleportHandler {
                                     logger.info(String.format("[BorderTeleport] Recreated mount for %s", player.getName()));
                                 }
                             }
-                        }.runTaskLater(BorderTeleport.this, 5L); // Short delay to ensure player is loaded
+                        }.runTaskLater(plugin, 5L); // Short delay to ensure player is loaded
                     }
 
                     logger.info(String.format("[BorderTeleport] Successfully teleported %s to stored location: %s",
-                            player.getName(), formatLocation(targetLoc)));
-                    pendingTeleports.remove(player.getUniqueId());
+                            player.getName(), LocationUtils.formatLocation(targetLoc)));
+                    plugin.pendingTeleports.remove(player.getUniqueId());
                 } else {
                     logger.warning(String.format("[BorderTeleport] Failed teleport attempt %d/%d for %s",
                             pending.getRetryCount(), plugin.maxRetries, player.getName()));
@@ -231,27 +235,29 @@ public class TeleportHandler {
 
     public void handleExpiredTeleport(Player player, PendingTeleport pending) {
         switch (plugin.expireAction.toUpperCase()) {
-            case "SPAWN":
+            case "SPAWN" -> {
                 player.teleport(player.getWorld().getSpawnLocation());
                 player.sendMessage(MiniMessage.miniMessage().deserialize(
                         "<red>Your teleport request expired. You have been sent to spawn."));
-                break;
-
-            case "PREVIOUS_LOCATION":
-                player.teleport(pending.location);
+            }
+            case "PREVIOUS_LOCATION" -> {
+                player.teleport(pending.getLocation());
                 player.sendMessage(MiniMessage.miniMessage().deserialize(
                         "<red>Your teleport request expired. You have been sent back."));
-                break;
-
-            case "REJECT":
+            }
+            case "REJECT" -> {
                 player.sendMessage(MiniMessage.miniMessage().deserialize(
                         "<red>Your teleport request expired. Please try again."));
-                break;
-
-            default:
+            }
+            default -> {
                 player.teleport(player.getWorld().getSpawnLocation());
-                logger.warning("[BorderTeleport] Unknown expire-action: " + expireAction + ". Defaulting to SPAWN.");
-                break;
+                logger.warning("[BorderTeleport] Unknown expire-action: " + plugin.expireAction + ". Defaulting to SPAWN.");
+            }
         }
+    }
+
+    public void onPluginMessageReceived(Player player, byte[] message) {
+        // Implement plugin message handling logic here
+        // This method was referenced in the BorderTeleport class but not implemented in the original code
     }
 }

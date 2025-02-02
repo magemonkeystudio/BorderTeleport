@@ -1,13 +1,22 @@
-import commands.BorderCommand;
-import handlers.ConfigurationHandler;
-import handlers.ServerStatusHandler;
-import listeners.JoinListener;
-import listeners.MovementListener;
+package magemonkey;
+
+import magemonkey.commands.BorderCommand;
+import magemonkey.data.PendingTeleport;
+import magemonkey.handlers.ConfigurationHandler;
+import magemonkey.handlers.ServerStatusHandler;
+import magemonkey.handlers.TeleportHandler;
+import magemonkey.listeners.JoinListener;
+import magemonkey.listeners.MovementListener;
+
 import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.messaging.PluginMessageListener;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -31,7 +40,7 @@ public class BorderTeleport extends JavaPlugin implements PluginMessageListener 
     public String expireAction;
     public final Map<UUID, PendingTeleport> pendingTeleports = new HashMap<>();
 
-    private ConfigurationHandler configHandler;
+    public ConfigurationHandler configHandler;
     private ServerStatusHandler statusHandler;
     public TeleportHandler teleportHandler;
 
@@ -47,21 +56,19 @@ public class BorderTeleport extends JavaPlugin implements PluginMessageListener 
         configHandler.loadConfiguration();
         setupChannels();
 
-        // Start server status check task
         new BukkitRunnable() {
             @Override
             public void run() {
                 statusHandler.checkServerStatuses();
             }
-        }.runTaskTimer(this, 100L, 600L); // Check every 30 seconds
+        }.runTaskTimer(this, 100L, 600L);
 
-        // Start pending teleports cleanup task
         new BukkitRunnable() {
             @Override
             public void run() {
                 cleanupExpiredTeleports();
             }
-        }.runTaskTimer(this, 200L, 200L); // Check every 10 seconds
+        }.runTaskTimer(this, 200L, 200L);
 
         logger.info("[BorderTeleport] Plugin enabled on server: " + currentServerName + " (Region: " + currentRegionKey + ")");
     }
@@ -80,7 +87,11 @@ public class BorderTeleport extends JavaPlugin implements PluginMessageListener 
     private void setupChannels() {
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
         getServer().getMessenger().registerIncomingPluginChannel(this, "BungeeCord", this);
-        getCommand("border").setExecutor(new BorderCommand(this));
+
+        if (getCommand("border") != null) {
+            getCommand("border").setExecutor(new BorderCommand(this));
+        }
+
         Bukkit.getPluginManager().registerEvents(new MovementListener(this), this);
         Bukkit.getPluginManager().registerEvents(new JoinListener(this), this);
     }

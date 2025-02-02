@@ -1,7 +1,6 @@
-package com.yourplugin.handlers;
+package magemonkey.handlers;
 
-import com.yourplugin.BorderTeleport;
-import net.kyori.adventure.text.Component;
+import magemonkey.BorderTeleport;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.configuration.ConfigurationSection;
 
@@ -18,20 +17,19 @@ public class ConfigurationHandler {
 
     public void loadConfiguration() {
         plugin.reloadConfig();
+
         plugin.currentServerName = plugin.getConfig().getString("server-name", "unknown");
         plugin.teleportCooldownMs = plugin.getConfig().getLong("teleport-cooldown-ms", 3000);
         plugin.pushbackDistance = plugin.getConfig().getInt("offline-pushback-distance", 5);
         plugin.safeZoneDistance = plugin.getConfig().getInt("safe-zone-distance", 2);
         plugin.notifyServerOffline = plugin.getConfig().getBoolean("notify-server-offline", true);
 
-        // Load teleport timeout settings
         plugin.requestTimeoutSeconds = plugin.getConfig().getLong("teleport.request-timeout", 30);
         plugin.gracePeriodSeconds = plugin.getConfig().getLong("teleport.grace-period", 15);
         plugin.maxRetries = plugin.getConfig().getInt("teleport.max-retries", 3);
         plugin.retryDelaySeconds = plugin.getConfig().getLong("teleport.retry-delay", 2);
         plugin.expireAction = plugin.getConfig().getString("teleport.expire-action", "SPAWN");
 
-        // Load MiniMessage formatted offline message
         String rawOfflineMessage = plugin.getConfig().getString("offline-message", "<red>This server is currently offline!");
         plugin.offlineMessage = MiniMessage.miniMessage().deserialize(rawOfflineMessage);
 

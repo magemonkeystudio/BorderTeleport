@@ -1,4 +1,4 @@
-package com.yourplugin.data;
+package magemonkey.data;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -24,6 +24,10 @@ public class MountData {
     private final UUID ownerUUID;
 
     public MountData(Entity mount) {
+        if (mount == null) {
+            throw new IllegalArgumentException("Mount cannot be null");
+        }
+
         this.entityType = mount.getType();
         this.customName = mount.getCustomName();
         this.attributes = new HashMap<>();
@@ -53,6 +57,10 @@ public class MountData {
     }
 
     public Entity recreateMount(World world, Location location) {
+        if (world == null || location == null) {
+            throw new IllegalArgumentException("World and location must not be null");
+        }
+
         Entity mount = world.spawnEntity(location, entityType);
 
         if (customName != null) {
