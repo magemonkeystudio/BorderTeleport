@@ -29,25 +29,23 @@ public class MountData {
         }
 
         this.entityType = mount.getType();
-        this.customName = mount.getCustomName();
+        this.customName = mount.getCustomName() == null ? null : mount.getCustomName();
         this.attributes = new HashMap<>();
 
-        if (mount instanceof LivingEntity) {
-            LivingEntity living = (LivingEntity) mount;
+        if (mount instanceof LivingEntity living) {
             this.health = living.getHealth();
 
-            for (Attribute attribute : Attribute.values()) {
+            for (var attribute : Attribute.getValues()) {
                 AttributeInstance instance = living.getAttribute(attribute);
                 if (instance != null) {
-                    attributes.put(attribute.name(), instance.getBaseValue());
+                    attributes.put(attribute.getKey(), instance.getBaseValue());
                 }
             }
         } else {
             this.health = 0;
         }
 
-        if (mount instanceof Tameable) {
-            Tameable tameable = (Tameable) mount;
+        if (mount instanceof Tameable tameable) {
             this.tamed = tameable.isTamed();
             this.ownerUUID = tameable.getOwner() != null ? tameable.getOwner().getUniqueId() : null;
         } else {
@@ -64,11 +62,10 @@ public class MountData {
         Entity mount = world.spawnEntity(location, entityType);
 
         if (customName != null) {
-            mount.setCustomName(customName);
+            mount.customName(net.kyori.adventure.text.Component.text(customName));
         }
 
-        if (mount instanceof LivingEntity) {
-            LivingEntity living = (LivingEntity) mount;
+        if (mount instanceof LivingEntity living) {
             living.setHealth(health);
 
             for (Map.Entry<String, Object> entry : attributes.entrySet()) {
@@ -84,8 +81,7 @@ public class MountData {
             }
         }
 
-        if (mount instanceof Tameable && tamed && ownerUUID != null) {
-            Tameable tameable = (Tameable) mount;
+        if (mount instanceof Tameable tameable && tamed && ownerUUID != null) {
             tameable.setTamed(true);
             AnimalTamer owner = Bukkit.getPlayer(ownerUUID);
             if (owner != null) {

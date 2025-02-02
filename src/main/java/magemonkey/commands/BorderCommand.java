@@ -31,8 +31,8 @@ public class BorderCommand implements CommandExecutor {
             sender.sendMessage("§aBorderTeleport configuration reloaded successfully.");
 
             // Log reload to console
-            plugin.getLogger().info("BorderTeleport configuration reloaded by " +
-                    (sender instanceof Player ? ((Player)sender).getName() : "CONSOLE"));
+            String reloadedBy = sender instanceof Player player ? player.getName() : "CONSOLE";
+            plugin.getLogger().info("BorderTeleport configuration reloaded by " + reloadedBy);
 
             return true;
         }
