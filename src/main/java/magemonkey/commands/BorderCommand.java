@@ -41,4 +41,5 @@ public class BorderCommand implements CommandExecutor {
         sender.sendMessage("§cUsage: /border reload");
         return true;
     }
+
 }

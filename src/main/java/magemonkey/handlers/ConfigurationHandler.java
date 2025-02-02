@@ -87,4 +87,5 @@ public class ConfigurationHandler {
         logger.warning("No neighboring server found in direction " + direction);
         return null;
     }
+
 }

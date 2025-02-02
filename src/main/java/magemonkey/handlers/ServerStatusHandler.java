@@ -16,4 +16,5 @@ public class ServerStatusHandler {
 
         plugin.getPluginLogger().info("[BorderTeleport] Server Status: " + serverName + " - Region: " + regionKey);
     }
+
 }

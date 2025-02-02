@@ -106,4 +106,5 @@ public class BorderTeleport extends JavaPlugin {
         this.maxZ = maxZ;
         logger.info("Set maxZ: " + maxZ);
     }
+
 }

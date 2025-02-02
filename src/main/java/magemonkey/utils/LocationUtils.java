@@ -14,4 +14,5 @@ public class LocationUtils {
         return x >= plugin.getMinX() && x <= plugin.getMaxX() &&
                 z >= plugin.getMinZ() && z <= plugin.getMaxZ();
     }
+
 }

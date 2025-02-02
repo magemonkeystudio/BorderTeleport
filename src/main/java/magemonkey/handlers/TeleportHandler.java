@@ -66,4 +66,5 @@ public class TeleportHandler implements PluginMessageListener {
             plugin.getLogger().severe("Failed to send player to server: " + e.getMessage());
         }
     }
+
 }
