@@ -1,7 +1,9 @@
 package magemonkey.data;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Registry;
 import org.bukkit.World;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
@@ -17,9 +19,9 @@ import java.util.UUID;
 
 public class MountData {
     private final EntityType entityType;
-    private final String customName;
+    private final Component customName;
     private final double health;
-    private final Map<String, Object> attributes;
+    private final Map<Attribute, Double> attributes;
     private final boolean tamed;
     private final UUID ownerUUID;
 
@@ -29,18 +31,19 @@ public class MountData {
         }
 
         this.entityType = mount.getType();
-        this.customName = mount.getCustomName() == null ? null : mount.getCustomName();
+        this.customName = mount.customName();
         this.attributes = new HashMap<>();
 
         if (mount instanceof LivingEntity living) {
             this.health = living.getHealth();
 
-            for (var attribute : Attribute.getValues()) {
+            // Store all available attributes for this entity using Registry
+            Registry.ATTRIBUTE.forEach(attribute -> {
                 AttributeInstance instance = living.getAttribute(attribute);
                 if (instance != null) {
-                    attributes.put(attribute.getKey(), instance.getBaseValue());
+                    attributes.put(attribute, instance.getBaseValue());
                 }
-            }
+            });
         } else {
             this.health = 0;
         }
@@ -62,21 +65,17 @@ public class MountData {
         Entity mount = world.spawnEntity(location, entityType);
 
         if (customName != null) {
-            mount.customName(net.kyori.adventure.text.Component.text(customName));
+            mount.customName(customName);
         }
 
         if (mount instanceof LivingEntity living) {
             living.setHealth(health);
 
-            for (Map.Entry<String, Object> entry : attributes.entrySet()) {
-                try {
-                    Attribute attribute = Attribute.valueOf(entry.getKey());
-                    AttributeInstance instance = living.getAttribute(attribute);
-                    if (instance != null) {
-                        instance.setBaseValue((double) entry.getValue());
-                    }
-                } catch (IllegalArgumentException e) {
-                    // Skip invalid attributes
+            // Restore attributes
+            for (Map.Entry<Attribute, Double> entry : attributes.entrySet()) {
+                AttributeInstance instance = living.getAttribute(entry.getKey());
+                if (instance != null) {
+                    instance.setBaseValue(entry.getValue());
                 }
             }
         }
@@ -90,5 +89,30 @@ public class MountData {
         }
 
         return mount;
+    }
+
+    // Getters
+    public EntityType getEntityType() {
+        return entityType;
+    }
+
+    public Component getCustomName() {
+        return customName;
+    }
+
+    public double getHealth() {
+        return health;
+    }
+
+    public Map<Attribute, Double> getAttributes() {
+        return new HashMap<>(attributes);
+    }
+
+    public boolean isTamed() {
+        return tamed;
+    }
+
+    public UUID getOwnerUUID() {
+        return ownerUUID;
     }
 }

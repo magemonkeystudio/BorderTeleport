@@ -1,14 +1,8 @@
 package magemonkey.handlers;
 
 import magemonkey.BorderTeleport;
-import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.entity.Player;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.Collection;
 import java.util.logging.Logger;
 
 public class ServerStatusHandler {
@@ -21,38 +15,36 @@ public class ServerStatusHandler {
     }
 
     public void checkServerStatuses() {
+        // Log current server information
+        logger.info("[BorderTeleport] Current server name: " + plugin.currentServerName);
+        logger.info("[BorderTeleport] Current region key: " + plugin.currentRegionKey);
+        logger.info("[BorderTeleport] Boundaries: X(" + plugin.minX + " to " + plugin.maxX +
+                "), Z(" + plugin.minZ + " to " + plugin.maxZ + ")");
+
         ConfigurationSection regions = plugin.getConfig().getConfigurationSection("regions");
-        if (regions == null) return;
-
-        for (String regionKey : regions.getKeys(false)) {
-            String serverName = regions.getString(regionKey + ".server-name");
-            if (serverName != null && !serverName.equals(plugin.currentServerName)) {
-                checkServerStatus(serverName);
-            }
-        }
-    }
-
-    public void checkServerStatus(String server) {
-        Collection<? extends Player> onlinePlayers = Bukkit.getOnlinePlayers();
-
-        if (onlinePlayers.isEmpty()) {
-            logger.warning("[BorderTeleport] Cannot check server status - no online players");
+        if (regions == null) {
+            logger.severe("[BorderTeleport] No regions defined in config!");
             return;
         }
 
-        try (ByteArrayOutputStream b = new ByteArrayOutputStream();
-             DataOutputStream out = new DataOutputStream(b)) {
+        // Log all configured regions
+        logger.info("[BorderTeleport] Configured regions:");
+        for (String regionKey : regions.getKeys(false)) {
+            String serverName = regions.getString(regionKey + ".server-name");
+            if (serverName != null) {
+                int minX = regions.getInt(regionKey + ".min-x");
+                int maxX = regions.getInt(regionKey + ".max-x");
+                int minZ = regions.getInt(regionKey + ".min-z");
+                int maxZ = regions.getInt(regionKey + ".max-z");
+                logger.info(String.format("[BorderTeleport] Region %s: server=%s, X(%d to %d), Z(%d to %d)",
+                        regionKey, serverName, minX, maxX, minZ, maxZ));
 
-            out.writeUTF("ServerStatus");
-            out.writeUTF(server);
-
-            // Send through the first online player
-            onlinePlayers.iterator().next()
-                    .sendPluginMessage(plugin, "BungeeCord", b.toByteArray());
-
-        } catch (IOException e) {
-            logger.warning(String.format("[BorderTeleport] Failed to check status of server %s: %s",
-                    server, e.getMessage()));
+                // Set server status if it's not our server
+                if (!serverName.equals(plugin.currentServerName)) {
+                    plugin.serverStatus.put(serverName, true);
+                    logger.info("[BorderTeleport] Setting server " + serverName + " as online");
+                }
+            }
         }
     }
 }
