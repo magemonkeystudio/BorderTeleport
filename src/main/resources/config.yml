@@ -1,6 +1,7 @@
 # BorderTeleport Plugin Configuration
 
 # The name of the current server (must match what is used in BungeeCord)
+# Example: If your server is named "survival1" in BungeeCord config, use that exact name here
 server-name: "southwest"
 
 # Define the region boundaries for each server.
@@ -9,7 +10,7 @@ regions:
   # The northwest region represents the top-left quadrant of the world.
   # Players in this area are on the "Server1" instance.
   northwest:
-    server-name: "Server1"  # The name of the server that manages this region.
+    server-name: "Server1"  # The name of the server that manages this region, must match BungeeCord config
     min-x: -8192  # Western boundary of the northwest region (leftmost edge).
     max-x: 0  # Eastern boundary of the northwest region (center of the world).
     min-z: -8192  # Northern boundary of the northwest region (topmost edge).
@@ -18,7 +19,7 @@ regions:
   # The northeast region represents the top-right quadrant of the world.
   # Players in this area are on the "Server2" instance.
   northeast:
-    server-name: "Server2"  # The name of the server that manages this region.
+    server-name: "Server2"  # The name of the server that manages this region, must match BungeeCord config
     min-x: 0  # Western boundary of the northeast region (center of the world).
     max-x: 8192  # Eastern boundary of the northeast region (rightmost edge).
     min-z: -8192  # Northern boundary of the northeast region (topmost edge).
@@ -27,7 +28,7 @@ regions:
   # The southwest region represents the bottom-left quadrant of the world.
   # Players in this area are on the "Server3" instance.
   southwest:
-    server-name: "Server3"  # The name of the server that manages this region.
+    server-name: "Server3"  # The name of the server that manages this region, must match BungeeCord config
     min-x: -8192  # Western boundary of the southwest region (leftmost edge).
     max-x: 0  # Eastern boundary of the southwest region (center of the world).
     min-z: 0  # Northern boundary of the southwest region (middle of the world).
@@ -36,22 +37,66 @@ regions:
   # The southeast region represents the bottom-right quadrant of the world.
   # Players in this area are on the "Server4" instance.
   southeast:
-    server-name: "Server4"  # The name of the server that manages this region.
+    server-name: "Server4"  # The name of the server that manages this region, must match BungeeCord config
     min-x: 0  # Western boundary of the southeast region (center of the world).
     max-x: 8192  # Eastern boundary of the southeast region (rightmost edge).
     min-z: 0  # Northern boundary of the southeast region (middle of the world).
     max-z: 8192  # Southern boundary of the southeast region (bottommost edge).
 
 # Enable or disable messages when a player tries to teleport to an offline server
+# Valid values: true, false
 notify-server-offline: true
 
 # Message to send when a server is offline (if notify-server-offline is enabled)
+# Supports color codes with '&' symbol
+# Example values: "&cServer offline!", "&4Cannot travel there!", "&eRegion unavailable"
 server-offline-message: "&cThe path ahead is closed. The server is offline."
 
-# Teleport cooldown (in milliseconds) to prevent multiple rapid crossings
+# Teleport cooldown to prevent multiple rapid crossings
+# Example values: 1000 (1 second), 3000 (3 seconds), 5000 (5 seconds)
+# Minimum recommended: 1000 (1 second)
 teleport-cooldown-ms: 3000
 
-# Message displayed when a player tries to cross into an offline server.
-# Set "show-offline-message" to false to disable the message.
+# Message settings for offline server notifications
+# Set "show-offline-message" to false to disable the message
 show-offline-message: true
+# Supports color codes with '&' symbol
 offline-message: "The server you are trying to reach is offline!"
+
+# Distance (in blocks) from the border where teleportation won't trigger
+# Example values: 1 (minimum), 2 (recommended), 5 (more conservative)
+# This creates a "safe zone" near borders to prevent accidental teleports
+safe-zone-distance: 2
+
+# How far to push players back when they hit an offline server's border
+# Example values: 3 (minimum), 5 (recommended), 10 (more conservative)
+# Higher values provide more clearance from the border
+offline-pushback-distance: 5
+
+teleport:
+  # Base timeout for pending teleports (in seconds)
+  # Example values: 15 (aggressive), 30 (recommended), 60 (conservative)
+  # This is how long the plugin will wait for a teleport to complete
+  request-timeout: 30
+
+  # Additional time given if player is attempting to connect (in seconds)
+  # Example values: 5 (aggressive), 15 (recommended), 30 (conservative)
+  # This extends the timeout if the player is actively trying to connect
+  grace-period: 15
+
+  # Number of times to retry a failed teleport
+  # Valid values: 1-10 (3 recommended)
+  # Higher values give more attempts to complete the teleport
+  max-retries: 3
+
+  # Delay between retry attempts (in seconds)
+  # Valid values: 1-10 (2 recommended)
+  # Lower values retry more quickly, higher values reduce server load
+  retry-delay: 2
+
+  # What to do when teleport expires
+  # Valid values:
+  # - "SPAWN": Teleport player to spawn point of current server
+  # - "PREVIOUS_LOCATION": Return player to their original position
+  # - "REJECT": Leave player at current position with message
+  expire-action: "SPAWN"
