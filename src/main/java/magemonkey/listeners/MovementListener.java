@@ -1,4 +1,3 @@
-// MovementListener.java
 package magemonkey.listeners;
 
 import magemonkey.BorderTeleport;
@@ -17,6 +16,10 @@ public class MovementListener implements Listener {
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
+        if (plugin.getCurrentRegionKey() == null) {
+            return;
+        }
+
         Location from = event.getFrom();
         Location to = event.getTo();
 
@@ -31,19 +34,26 @@ public class MovementListener implements Listener {
         plugin.getLogger().info(player.getName() + " movement: FROM(x=" + from.getX() +
                 ", z=" + from.getZ() + ") TO(x=" + x + ", z=" + z + ")");
 
-        if (x <= plugin.getMinX()) {
-            plugin.getLogger().info(player.getName() + " crossed WEST border");
-            plugin.getTeleportHandler().attemptTeleport(player, "west");
-        } else if (x >= plugin.getMaxX()) {
-            plugin.getLogger().info(player.getName() + " crossed EAST border");
-            plugin.getTeleportHandler().attemptTeleport(player, "east");
-        } else if (z <= plugin.getMinZ()) {
-            plugin.getLogger().info(player.getName() + " crossed NORTH border");
-            plugin.getTeleportHandler().attemptTeleport(player, "north");
-        } else if (z >= plugin.getMaxZ()) {
-            plugin.getLogger().info(player.getName() + " crossed SOUTH border");
-            plugin.getTeleportHandler().attemptTeleport(player, "south");
+        boolean crossedBorder = false;
+        String direction = null;
+
+        if (from.getX() >= plugin.getMinX() && x < plugin.getMinX()) {
+            direction = "west";
+            crossedBorder = true;
+        } else if (from.getX() <= plugin.getMaxX() && x > plugin.getMaxX()) {
+            direction = "east";
+            crossedBorder = true;
+        } else if (from.getZ() >= plugin.getMinZ() && z < plugin.getMinZ()) {
+            direction = "north";
+            crossedBorder = true;
+        } else if (from.getZ() <= plugin.getMaxZ() && z > plugin.getMaxZ()) {
+            direction = "south";
+            crossedBorder = true;
+        }
+
+        if (crossedBorder && direction != null) {
+            plugin.getLogger().info(player.getName() + " crossed " + direction.toUpperCase() + " border");
+            plugin.getTeleportHandler().attemptTeleport(player, direction);
         }
     }
-
 }
