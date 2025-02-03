@@ -24,5 +24,4 @@ public class PendingTeleport {
         long expirationTime = timestamp + (timeoutSeconds + gracePeriodSeconds) * 1000;
         return currentTime > expirationTime;
     }
-
 }
