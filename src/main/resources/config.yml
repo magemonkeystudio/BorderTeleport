@@ -57,20 +57,14 @@ notify-server-offline: true
 # Message to send when a server is offline (if notify-server-offline is enabled)
 server-offline-message: "&cThe path ahead is closed. The server is offline."
 
-# Teleport cooldown to prevent rapid crossings (in milliseconds)
-teleport-cooldown-ms: 3000
-
 # Message settings for offline server notifications
 show-offline-message: true
 offline-message: "The server you are trying to reach is offline!"
 
-# Distance (in blocks) from the border where teleportation won't trigger.
-safe-zone-distance: 2
-
-# How far to push players back when they hit an offline server's border.
-offline-pushback-distance: 5
-
 teleport:
+  # Offset applied when transferring players (in blocks)
+  offset: 20
+
   # Base timeout for pending teleports (in seconds)
   request-timeout: 30
 

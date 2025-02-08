@@ -1,4 +1,4 @@
-package studio.magemonkey.borderteleport.handlers;
+package studio.magemonkey.handlers;
 
 import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
@@ -11,9 +11,9 @@ public class ConfigHandler {
         this.plugin = plugin;
     }
 
-    // Returns the current server's name from the config.
+    // Returns the current server's name from the config, defaults to "defaultServer" if missing.
     public String getCurrentServerName() {
-        return plugin.getConfig().getString("server-name");
+        return plugin.getConfig().getString("server-name", "defaultServer");
     }
 
     // Returns the configuration section for the specified region.
@@ -22,46 +22,28 @@ public class ConfigHandler {
     }
 
     // Returns the configuration section for the current region.
+    // Throws an IllegalStateException if the section is not found.
     public ConfigurationSection getCurrentRegionSection() {
-        return getRegionSection(getCurrentServerName());
-    }
-
-    // Returns the safe zone distance (in blocks) from the border.
-    public int getSafeZoneDistance() {
-        return plugin.getConfig().getInt("safe-zone-distance", 2);
-    }
-
-    // Returns the teleport cooldown in milliseconds.
-    public int getTeleportCooldownMs() {
-        return plugin.getConfig().getInt("teleport-cooldown-ms", 3000);
-    }
-
-    // Returns the offline server message.
-    public String getOfflineServerMessage() {
-        return plugin.getConfig().getString("server-offline-message", "&cThe path ahead is closed. The server is offline.");
-    }
-
-    // Returns whether to notify players when the destination server is offline.
-    public boolean shouldNotifyServerOffline() {
-        return plugin.getConfig().getBoolean("notify-server-offline", true);
-    }
-
-    // Returns the offline pushback distance (in blocks).
-    public int getOfflinePushbackDistance() {
-        return plugin.getConfig().getInt("offline-pushback-distance", 5);
+        ConfigurationSection section = getRegionSection(getCurrentServerName());
+        if (section == null) {
+            throw new IllegalStateException("No region configuration found for server: " + getCurrentServerName());
+        }
+        return section;
     }
 
     // Given a location, returns the region key (e.g., "northwest", "southeast") that contains it.
+    // Default values are provided if any keys are missing, avoiding a NullPointerException.
     public String getRegionForLocation(Location loc) {
         ConfigurationSection regionsSection = plugin.getConfig().getConfigurationSection("regions");
         if (regionsSection == null) return null;
 
         for (String key : regionsSection.getKeys(false)) {
             ConfigurationSection region = regionsSection.getConfigurationSection(key);
-            int minX = region.getInt("min-x");
-            int maxX = region.getInt("max-x");
-            int minZ = region.getInt("min-z");
-            int maxZ = region.getInt("max-z");
+            if (region == null) continue; // Skip if region section is missing
+            int minX = region.getInt("min-x", Integer.MIN_VALUE);
+            int maxX = region.getInt("max-x", Integer.MAX_VALUE);
+            int minZ = region.getInt("min-z", Integer.MIN_VALUE);
+            int maxZ = region.getInt("max-z", Integer.MAX_VALUE);
             double x = loc.getX();
             double z = loc.getZ();
             if (x >= minX && x <= maxX && z >= minZ && z <= maxZ) {

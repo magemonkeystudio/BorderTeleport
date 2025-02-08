@@ -1,4 +1,4 @@
-package studio.magemonkey.borderteleport.database;
+package studio.magemonkey.database;
 
 import java.sql.*;
 

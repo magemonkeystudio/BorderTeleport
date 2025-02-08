@@ -1,26 +1,21 @@
-package studio.magemonkey.borderteleport.handlers;
+package studio.magemonkey.handlers;
 
-import studio.magemonkey.borderteleport.BorderTeleport;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.messaging.PluginMessageListener;
+import org.jetbrains.annotations.NotNull;
+import studio.magemonkey.BorderTeleport;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
 
 public class TeleportHandler implements PluginMessageListener {
     private final BorderTeleport plugin;
     private static final String TELEPORT_SUBCHANNEL = "BorderTP";
-    private final HashMap<UUID, Long> teleportCooldowns = new HashMap<>();
 
-    public TeleportHandler(BorderTeleport plugin) {
+    public TeleportHandler(@NotNull BorderTeleport plugin) {
         this.plugin = plugin;
     }
 
@@ -29,7 +24,9 @@ public class TeleportHandler implements PluginMessageListener {
     }
 
     @Override
-    public void onPluginMessageReceived(String channel, Player player, byte[] message) {
+    public void onPluginMessageReceived(@NotNull String channel,
+                                        @NotNull Player player,
+                                        @NotNull byte[] message) {
         if (!channel.equals("BungeeCord")) return;
         try {
             DataInputStream in = new DataInputStream(new ByteArrayInputStream(message));
@@ -38,16 +35,10 @@ public class TeleportHandler implements PluginMessageListener {
                 String data = in.readUTF().trim();
                 plugin.getLogger().info("DEBUG: Raw data received: " + data);
                 String[] rawParts = data.split(";");
-                List<String> partsList = new ArrayList<>();
-                for (String part : rawParts) {
-                    if (!part.trim().isEmpty()) {
-                        partsList.add(part.trim());
-                    }
-                }
-                if (partsList.size() < 1) {
+                if (rawParts.length == 0) {
                     throw new IllegalArgumentException("No coordinate data found in message: " + data);
                 }
-                String coordinatePart = partsList.get(0);
+                String coordinatePart = rawParts[0];
                 String[] coords = coordinatePart.split(",");
                 if (coords.length < 5) {
                     throw new IllegalArgumentException("Coordinate data incomplete: " + coordinatePart);
@@ -68,14 +59,8 @@ public class TeleportHandler implements PluginMessageListener {
                 player.teleport(newLoc);
                 plugin.getLogger().info("DEBUG: Player teleported to new location with facing direction");
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             plugin.getLogger().severe("Error processing message: " + e.getMessage());
-            e.printStackTrace();
         }
-    }
-
-    // (The attemptTeleport method is provided as an example for triggering a teleport.)
-    public void attemptTeleport(Player player, String direction) {
-        // Implementation omitted for brevity.
     }
 }

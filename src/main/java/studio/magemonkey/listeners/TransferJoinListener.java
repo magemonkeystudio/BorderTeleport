@@ -1,14 +1,13 @@
-package studio.magemonkey.borderteleport.listeners;
+package studio.magemonkey.listeners;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
-import studio.magemonkey.borderteleport.BorderTeleport;
-import studio.magemonkey.borderteleport.database.MySQLManager;
+import studio.magemonkey.BorderTeleport;
+import studio.magemonkey.database.MySQLManager;
 
 public class TransferJoinListener implements Listener {
     private final BorderTeleport plugin;
@@ -50,28 +49,10 @@ public class TransferJoinListener implements Listener {
                         break;
                 }
 
-                // Ensure the target location is safe.
-                newLoc = getSafeLocation(newLoc);
-
                 player.teleport(newLoc);
                 mysql.deleteTransferData(player.getUniqueId().toString());
                 player.sendMessage("You have been transferred to a new server location!");
             }
         }, 20L); // 20 ticks delay (~1 second)
-    }
-
-    private Location getSafeLocation(Location loc) {
-        Location safeLoc = loc.clone();
-        while (!isSafe(safeLoc) && safeLoc.getY() < safeLoc.getWorld().getMaxHeight()) {
-            safeLoc.add(0, 1, 0);
-        }
-        return safeLoc;
-    }
-
-    private boolean isSafe(Location loc) {
-        Material blockType = loc.getBlock().getType();
-        Material blockAboveType = loc.clone().add(0, 1, 0).getBlock().getType();
-        Material blockBelowType = loc.clone().add(0, -1, 0).getBlock().getType();
-        return (blockType == Material.AIR && blockAboveType == Material.AIR && blockBelowType.isSolid());
     }
 }
