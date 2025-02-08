@@ -1,15 +1,10 @@
 name: BorderTeleport
+main: studio.magemonkey.borderteleport.BorderTeleport
 version: 1.0
-main: magemonkey.BorderTeleport
-api-version: 1.20
-description: A plugin that teleports players when they reach the world border.
-author: YourName
+api-version: 1.16
 commands:
-  border:
-    description: Reload the BorderTeleport configuration.
-    usage: /border reload
+  borderteleport:
+    description: "Manage BorderTeleport commands, including reload."
+    usage: /<command> reload
     permission: borderteleport.reload
-permissions:
-  borderteleport.reload:
-    description: Allows reloading the BorderTeleport configuration.
-    default: op
+    permission-message: "You do not have permission to use this command."
