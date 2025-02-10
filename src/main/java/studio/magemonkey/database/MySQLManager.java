@@ -24,7 +24,6 @@ public class MySQLManager {
             if (connection != null && !connection.isClosed()) {
                 return;
             }
-            // Modern MySQL driver class:
             Class.forName("com.mysql.cj.jdbc.Driver");
             String url = "jdbc:mysql://" + host + ":" + port + "/" + database
                     + "?useSSL=" + ConfigHandler.useSSL()
@@ -43,25 +42,20 @@ public class MySQLManager {
         }
     }
 
-    /**
-     * Creates or updates the player_transfer table (if it does not exist).
-     * Now includes columns for yaw and pitch (both FLOAT).
-     */
     public void setupTable() {
         if (connection == null) {
             logError("MySQL connection is null, cannot setup table.", null);
             return;
         }
         try (Statement stmt = connection.createStatement()) {
-            // Create the table if it doesn't exist.
-            // Includes yaw and pitch columns for storing direction.
+            // Ensures yaw/pitch columns exist
             String sql = "CREATE TABLE IF NOT EXISTS player_transfer (" +
                     "uuid VARCHAR(36) PRIMARY KEY, " +
                     "destServer VARCHAR(50), " +
                     "x INT, " +
                     "y INT, " +
                     "z INT, " +
-                    "direction VARCHAR(10), " +  // We keep this for reference (unused).
+                    "direction VARCHAR(10), " +
                     "yaw FLOAT, " +
                     "pitch FLOAT" +
                     ")";
@@ -71,10 +65,6 @@ public class MySQLManager {
         }
     }
 
-    /**
-     * Saves the player's transfer data, including offset position and yaw/pitch.
-     * - direction is kept but not used in the final teleport anymore.
-     */
     public void savePlayerTransfer(String uuid, String destServer, int x, int y, int z,
                                    String direction, float yaw, float pitch) {
         if (connection == null) {
@@ -98,9 +88,6 @@ public class MySQLManager {
         }
     }
 
-    /**
-     * Retrieves the stored location + yaw/pitch for a player's transfer.
-     */
     public TransferData getTransferData(String uuid) {
         if (connection == null) {
             logError("MySQL connection is null, cannot retrieve transfer data.", null);
@@ -128,9 +115,6 @@ public class MySQLManager {
         return null;
     }
 
-    /**
-     * Deletes the stored transfer data for a player once used.
-     */
     public void deleteTransferData(String uuid) {
         if (connection == null) {
             logError("MySQL connection is null, cannot delete transfer data.", null);
@@ -161,13 +145,10 @@ public class MySQLManager {
         }
     }
 
-    /**
-     * Holds all data needed to teleport a player on the destination server.
-     */
     public static class TransferData {
         public String destServer;
         public int x, y, z;
-        public String direction; // Not strictly used for the final teleport, but kept for reference.
+        public String direction;
         public float yaw, pitch;
 
         public TransferData(String destServer, int x, int y, int z, String direction, float yaw, float pitch) {
