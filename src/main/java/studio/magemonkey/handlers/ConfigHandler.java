@@ -2,44 +2,95 @@ package studio.magemonkey.handlers;
 
 import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.configuration.file.FileConfiguration;
+import studio.magemonkey.BorderTeleport;
 
 public class ConfigHandler {
-    private final JavaPlugin plugin;
 
-    public ConfigHandler(JavaPlugin plugin) {
-        this.plugin = plugin;
+    // Prevent instantiation since this is a utility class.
+    private ConfigHandler() { }
+
+    // Returns the plugin configuration.
+    private static FileConfiguration getConfig() {
+        return BorderTeleport.getInstance().getConfig();
     }
 
-    // Returns the current server's name from the config, defaults to "defaultServer" if missing.
-    public String getCurrentServerName() {
-        return plugin.getConfig().getString("server-name", "defaultServer");
+    // === MySQL Settings ===
+
+    public static String getMySQLHost() {
+        return getConfig().getString("mysql.host", "your_database_host");
     }
 
-    // Returns the configuration section for the specified region.
-    public ConfigurationSection getRegionSection(String regionKey) {
-        return plugin.getConfig().getConfigurationSection("regions." + regionKey);
+    public static int getMySQLPort() {
+        return getConfig().getInt("mysql.port", 3306);
     }
 
-    // Returns the configuration section for the current region.
-    // Throws an IllegalStateException if the section is not found.
-    public ConfigurationSection getCurrentRegionSection() {
-        ConfigurationSection section = getRegionSection(getCurrentServerName());
-        if (section == null) {
-            throw new IllegalStateException("No region configuration found for server: " + getCurrentServerName());
+    public static String getMySQLDatabase() {
+        return getConfig().getString("mysql.database", "your_database_name");
+    }
+
+    public static String getMySQLUsername() {
+        return getConfig().getString("mysql.username", "your_username");
+    }
+
+    public static String getMySQLPassword() {
+        return getConfig().getString("mysql.password", "your_password");
+    }
+
+    public static boolean useSSL() {
+        return getConfig().getBoolean("mysql.useSSL", false);
+    }
+
+    public static boolean allowPublicKeyRetrieval() {
+        return getConfig().getBoolean("mysql.allowPublicKeyRetrieval", true);
+    }
+
+    // === Region Configuration ===
+
+    // Returns the current server's name from the config.
+    public static String getCurrentServerName() {
+        return getConfig().getString("server-name", "defaultServer");
+    }
+
+    /**
+     * Returns the configuration section for the current region.
+     * This method scans all defined regions and returns the section whose internal
+     * "server-name" value matches the current server name.
+     *
+     * @return the configuration section for the current region.
+     * @throws IllegalStateException if no matching region configuration is found.
+     */
+    public static ConfigurationSection getCurrentRegionSection() {
+        ConfigurationSection regionsSection = getConfig().getConfigurationSection("regions");
+        if (regionsSection == null) {
+            throw new IllegalStateException("No regions configuration found!");
         }
-        return section;
-    }
-
-    // Given a location, returns the region key (e.g., "northwest", "southeast") that contains it.
-    // Default values are provided if any keys are missing, avoiding a NullPointerException.
-    public String getRegionForLocation(Location loc) {
-        ConfigurationSection regionsSection = plugin.getConfig().getConfigurationSection("regions");
-        if (regionsSection == null) return null;
-
+        String currentServer = getCurrentServerName();
         for (String key : regionsSection.getKeys(false)) {
             ConfigurationSection region = regionsSection.getConfigurationSection(key);
-            if (region == null) continue; // Skip if region section is missing
+            if (region != null) {
+                String serverName = region.getString("server-name");
+                if (serverName != null && serverName.equalsIgnoreCase(currentServer)) {
+                    return region;
+                }
+            }
+        }
+        throw new IllegalStateException("No region configuration found for server: " + currentServer);
+    }
+
+    /**
+     * Given a location, returns the region key (e.g., "northwest", "southeast")
+     * that contains the location.
+     *
+     * @param loc the location to check.
+     * @return the region key, or null if none found.
+     */
+    public static String getRegionForLocation(Location loc) {
+        ConfigurationSection regionsSection = getConfig().getConfigurationSection("regions");
+        if (regionsSection == null) return null;
+        for (String key : regionsSection.getKeys(false)) {
+            ConfigurationSection region = regionsSection.getConfigurationSection(key);
+            if (region == null) continue;
             int minX = region.getInt("min-x", Integer.MIN_VALUE);
             int maxX = region.getInt("max-x", Integer.MAX_VALUE);
             int minZ = region.getInt("min-z", Integer.MIN_VALUE);
@@ -51,5 +102,11 @@ public class ConfigHandler {
             }
         }
         return null;
+    }
+
+    // === Teleport Settings ===
+
+    public static int getTeleportRequestTimeout() {
+        return getConfig().getInt("teleport.request-timeout", 3);
     }
 }

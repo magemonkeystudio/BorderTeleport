@@ -11,26 +11,29 @@ import studio.magemonkey.listeners.TransferJoinListener;
 
 public class BorderTeleport extends JavaPlugin {
 
+    private static BorderTeleport instance;
     private MySQLManager mysqlManager;
-    private ConfigHandler configHandler;
 
     @Override
     public void onEnable() {
+        instance = this;
         saveDefaultConfig();
 
-        // Load MySQL settings from the config.
-        String host = getConfig().getString("mysql.host");
-        int port = getConfig().getInt("mysql.port");
-        String database = getConfig().getString("mysql.database");
-        String username = getConfig().getString("mysql.username");
-        String password = getConfig().getString("mysql.password");
+        // Retrieve MySQL settings from ConfigHandler.
+        String host = ConfigHandler.getMySQLHost();
+        int port = ConfigHandler.getMySQLPort();
+        String database = ConfigHandler.getMySQLDatabase();
+        String username = ConfigHandler.getMySQLUsername();
+        String password = ConfigHandler.getMySQLPassword();
 
         mysqlManager = new MySQLManager(host, port, database, username, password);
         mysqlManager.connect();
+        if (!mysqlManager.isConnected()) {
+            getLogger().severe("MySQL connection failed, disabling BorderTeleport plugin.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
         mysqlManager.setupTable();
-
-        // Initialize the configuration handler.
-        configHandler = new ConfigHandler(this);
 
         // Register event listeners.
         getServer().getPluginManager().registerEvents(new BorderListener(this, mysqlManager), this);
@@ -59,8 +62,7 @@ public class BorderTeleport extends JavaPlugin {
         }
     }
 
-    // Provide access to the configuration handler for other classes.
-    public ConfigHandler getConfigHandler() {
-        return configHandler;
+    public static BorderTeleport getInstance() {
+        return instance;
     }
 }
