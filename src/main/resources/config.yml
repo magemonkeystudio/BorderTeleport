@@ -1,78 +1,103 @@
 # BorderTeleport Plugin Configuration
+# This file controls all aspects of the BorderTeleport plugin's behavior.
 
 # MySQL settings (ensure these keys exist in your config if you use MySQL)
 mysql:
+  # The hostname or IP where your MySQL server is running.
   host: localhost
+  # The port on which your MySQL server is listening (default: 3306).
   port: 3306
+  # The name of the MySQL database to connect to.
   database: minecraft_transfer
+  # The MySQL username that the plugin should use when connecting.
   username: root
+  # The MySQL password for the above username.
   password: yourpassword
+  # Whether to use SSL/TLS for the MySQL connection. (true/false)
   useSSL: false
+  # Whether to allow the retrieval of the public key from the server (may be required with SSL).
   allowPublicKeyRetrieval: true
 
-# The name of the current server (must match what is used in BungeeCord)
+# The name of the current server (must match the name used in your BungeeCord config).
 server-name: "southwest"
 
-# Define the region boundaries for each server.
+# Define region boundaries for each “section” of the world.
+# Each region is tied to a different server name used by BungeeCord.
 regions:
   # The northwest region represents the top-left quadrant of the world.
   # Players in this area are on the "Server1" instance.
   northwest:
-    server-name: "Server1"  # The name of the server that manages this region, must match BungeeCord config
-    min-x: -8192            # Western boundary of the northwest region
-    max-x: 0                # Eastern boundary (center of the world)
-    min-z: -8192            # Northern boundary of the northwest region
-    max-z: 0                # Southern boundary (center of the world)
+    # Name of the server associated with this region (match BungeeCord).
+    server-name: "Server1"
+    # The minimum (west-most) X boundary for this region.
+    min-x: -8192
+    # The maximum (east-most) X boundary for this region.
+    max-x: 0
+    # The minimum (north-most) Z boundary for this region.
+    min-z: -8192
+    # The maximum (south-most) Z boundary for this region.
+    max-z: 0
 
   # The northeast region represents the top-right quadrant of the world.
   # Players in this area are on the "Server2" instance.
   northeast:
+    # Name of the server associated with this region.
     server-name: "Server2"
+    # Minimum X boundary for this region.
     min-x: 0
+    # Maximum X boundary for this region.
     max-x: 8192
+    # Minimum Z boundary for this region.
     min-z: -8192
+    # Maximum Z boundary for this region.
     max-z: 0
 
   # The southwest region represents the bottom-left quadrant of the world.
   # Players in this area are on the "Server3" instance.
   southwest:
+    # Name of the server for this region.
     server-name: "Server3"
+    # Minimum X boundary for this region.
     min-x: -8192
+    # Maximum X boundary for this region.
     max-x: 0
+    # Minimum Z boundary for this region.
     min-z: 0
+    # Maximum Z boundary for this region.
     max-z: 8192
 
   # The southeast region represents the bottom-right quadrant of the world.
   # Players in this area are on the "Server4" instance.
   southeast:
+    # Name of the server for this region.
     server-name: "Server4"
+    # Minimum X boundary for this region.
     min-x: 0
+    # Maximum X boundary for this region.
     max-x: 8192
+    # Minimum Z boundary for this region.
     min-z: 0
+    # Maximum Z boundary for this region.
     max-z: 8192
 
-# Enable or disable messages when a player tries to teleport to an offline server
+# Whether to notify the player if the destination server is offline (not yet implemented).
 notify-server-offline: true
-
-# Message to send when a server is offline (if notify-server-offline is enabled)
+# The specific message to display if 'notify-server-offline' is true and the server is offline.
 server-offline-message: "&cThe path ahead is closed. The server is offline."
-
-# Message settings for offline server notifications
+# Whether to show a more generic offline message if the server is offline.
 show-offline-message: true
+# The generic offline message shown to the player (if 'show-offline-message' is true).
 offline-message: "The server you are trying to reach is offline!"
 
+# Configuration options that control teleport or transfer behavior.
 teleport:
-  # Offset applied when transferring players (in blocks)
+  # Offset (in blocks) applied to the player’s location on arrival in a new server.
   offset: 20
-
-  # Base timeout for pending teleports (in seconds)
+  # Cooldown (in seconds) before a player can trigger another border-based transfer.
   request-timeout: 30
-
-  # Additional time given if the player is attempting to connect (in seconds)
+  # Grace period (in seconds) before timing out or canceling a pending teleport (placeholder; not yet implemented).
   grace-period: 15
-
-  # Number of times to retry a failed teleport
+  # How many times to retry a failed teleport (placeholder; not yet implemented).
   max-retries: 3
-
-  # Delay between retry attempts (in seconds)
+  # Delay (in seconds) between each retry attempt (placeholder; not yet implemented).
   retry-delay: 2

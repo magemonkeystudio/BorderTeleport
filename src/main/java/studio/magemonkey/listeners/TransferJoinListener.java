@@ -12,47 +12,46 @@ import studio.magemonkey.database.MySQLManager;
 public class TransferJoinListener implements Listener {
     private final BorderTeleport plugin;
     private final MySQLManager mysql;
-    private final int offset;
 
     public TransferJoinListener(BorderTeleport plugin, MySQLManager mysql) {
         this.plugin = plugin;
         this.mysql = mysql;
-        // Use a default offset of 20 blocks if not defined in the config.
-        this.offset = plugin.getConfig().getInt("transfer.offset", 20);
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
-        // Delay to ensure the player is fully loaded.
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            MySQLManager.TransferData data = mysql.getTransferData(player.getUniqueId().toString());
-            if (data != null) {
-                Location newLoc = player.getLocation().clone();
-                newLoc.setX(data.x);
-                newLoc.setY(data.y);
-                newLoc.setZ(data.z);
 
-                // Apply the offset in the direction the player crossed.
-                switch(data.direction.toUpperCase()) {
-                    case "NORTH":
-                        newLoc.setZ(newLoc.getZ() - offset);
-                        break;
-                    case "SOUTH":
-                        newLoc.setZ(newLoc.getZ() + offset);
-                        break;
-                    case "EAST":
-                        newLoc.setX(newLoc.getX() + offset);
-                        break;
-                    case "WEST":
-                        newLoc.setX(newLoc.getX() - offset);
-                        break;
+        // Run on the next tick (0 delay), so the player is fully loaded
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            // Check asynchronously for transfer data
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                MySQLManager.TransferData data = mysql.getTransferData(player.getUniqueId().toString());
+                if (data != null) {
+                    // Switch to the main thread for teleportation
+                    Bukkit.getScheduler().runTask(plugin, () -> {
+                        if (!player.isOnline()) {
+                            return; // If they've logged out, skip.
+                        }
+
+                        // We skip the offset here; it's already applied on the source server.
+                        // Just use the coordinates + yaw/pitch from the DB
+                        Location newLoc = player.getLocation().clone();
+                        newLoc.setX(data.x);
+                        newLoc.setY(data.y);
+                        newLoc.setZ(data.z);
+                        newLoc.setYaw(data.yaw);
+                        newLoc.setPitch(data.pitch);
+
+                        player.teleport(newLoc);
+
+                        // Now remove the data from the DB
+                        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+                            mysql.deleteTransferData(player.getUniqueId().toString());
+                        });
+                    });
                 }
-
-                player.teleport(newLoc);
-                mysql.deleteTransferData(player.getUniqueId().toString());
-                player.sendMessage("You have been transferred to a new server location!");
-            }
-        }, 20L); // 20 ticks delay (~1 second)
+            });
+        });
     }
 }

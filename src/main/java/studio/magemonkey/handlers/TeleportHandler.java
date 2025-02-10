@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import studio.magemonkey.BorderTeleport;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 

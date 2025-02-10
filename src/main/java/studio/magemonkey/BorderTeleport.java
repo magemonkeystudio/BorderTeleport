@@ -19,7 +19,7 @@ public class BorderTeleport extends JavaPlugin {
         instance = this;
         saveDefaultConfig();
 
-        // Retrieve MySQL settings from ConfigHandler.
+        // Retrieve MySQL settings from ConfigHandler
         String host = ConfigHandler.getMySQLHost();
         int port = ConfigHandler.getMySQLPort();
         String database = ConfigHandler.getMySQLDatabase();
@@ -35,16 +35,16 @@ public class BorderTeleport extends JavaPlugin {
         }
         mysqlManager.setupTable();
 
-        // Register event listeners.
+        // Register event listeners
         getServer().getPluginManager().registerEvents(new BorderListener(this, mysqlManager), this);
         getServer().getPluginManager().registerEvents(new TransferJoinListener(this, mysqlManager), this);
 
-        // Register TeleportHandler for incoming plugin messages on the "BungeeCord" channel.
+        // Register TeleportHandler for plugin messages on "BungeeCord"
         TeleportHandler teleportHandler = new TeleportHandler(this);
         getServer().getMessenger().registerIncomingPluginChannel(this, "BungeeCord", teleportHandler);
         getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 
-        // Register the /borderteleport command.
+        // Register the /borderteleport command
         PluginCommand command = getCommand("borderteleport");
         if (command != null) {
             command.setExecutor(new BorderTeleportCommand(this));

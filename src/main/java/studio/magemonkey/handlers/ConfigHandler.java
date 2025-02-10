@@ -7,10 +7,8 @@ import studio.magemonkey.BorderTeleport;
 
 public class ConfigHandler {
 
-    // Prevent instantiation since this is a utility class.
     private ConfigHandler() { }
 
-    // Returns the plugin configuration.
     private static FileConfiguration getConfig() {
         return BorderTeleport.getInstance().getConfig();
     }
@@ -47,19 +45,10 @@ public class ConfigHandler {
 
     // === Region Configuration ===
 
-    // Returns the current server's name from the config.
     public static String getCurrentServerName() {
         return getConfig().getString("server-name", "defaultServer");
     }
 
-    /**
-     * Returns the configuration section for the current region.
-     * This method scans all defined regions and returns the section whose internal
-     * "server-name" value matches the current server name.
-     *
-     * @return the configuration section for the current region.
-     * @throws IllegalStateException if no matching region configuration is found.
-     */
     public static ConfigurationSection getCurrentRegionSection() {
         ConfigurationSection regionsSection = getConfig().getConfigurationSection("regions");
         if (regionsSection == null) {
@@ -78,13 +67,6 @@ public class ConfigHandler {
         throw new IllegalStateException("No region configuration found for server: " + currentServer);
     }
 
-    /**
-     * Given a location, returns the region key (e.g., "northwest", "southeast")
-     * that contains the location.
-     *
-     * @param loc the location to check.
-     * @return the region key, or null if none found.
-     */
     public static String getRegionForLocation(Location loc) {
         ConfigurationSection regionsSection = getConfig().getConfigurationSection("regions");
         if (regionsSection == null) return null;
