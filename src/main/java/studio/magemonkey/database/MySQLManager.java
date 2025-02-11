@@ -48,7 +48,8 @@ public class MySQLManager {
             return;
         }
         try (Statement stmt = connection.createStatement()) {
-            // Ensures yaw/pitch columns exist
+
+            // Original table creation
             String sql = "CREATE TABLE IF NOT EXISTS player_transfer (" +
                     "uuid VARCHAR(36) PRIMARY KEY, " +
                     "destServer VARCHAR(50), " +
@@ -57,22 +58,42 @@ public class MySQLManager {
                     "z INT, " +
                     "direction VARCHAR(10), " +
                     "yaw FLOAT, " +
-                    "pitch FLOAT" +
+                    "pitch FLOAT, " +
+                    // New column for horse data
+                    "horseData TEXT" +
                     ")";
             stmt.executeUpdate(sql);
+
+            // You could also run an ALTER TABLE if needed, e.g.:
+            // stmt.executeUpdate("ALTER TABLE player_transfer ADD COLUMN horseData TEXT");
+            // but if you're sure the table doesn't exist, the CREATE statement is enough
+
         } catch (SQLException e) {
             logError("Failed to setup MySQL table: " + e.getMessage(), e);
         }
     }
 
-    public void savePlayerTransfer(String uuid, String destServer, int x, int y, int z,
-                                   String direction, float yaw, float pitch) {
+    /**
+     * Saves the player's transfer data, including offset position, yaw/pitch, and optional horse data.
+     */
+    public void savePlayerTransfer(
+            String uuid,
+            String destServer,
+            int x,
+            int y,
+            int z,
+            String direction,
+            float yaw,
+            float pitch,
+            String horseData // <-- new parameter
+    ) {
         if (connection == null) {
             logError("MySQL connection is null, cannot save player transfer.", null);
             return;
         }
-        String query = "REPLACE INTO player_transfer (uuid, destServer, x, y, z, direction, yaw, pitch) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String query = "REPLACE INTO player_transfer "
+                + "(uuid, destServer, x, y, z, direction, yaw, pitch, horseData) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = connection.prepareStatement(query)) {
             ps.setString(1, uuid);
             ps.setString(2, destServer);
@@ -82,18 +103,23 @@ public class MySQLManager {
             ps.setString(6, direction);
             ps.setFloat(7, yaw);
             ps.setFloat(8, pitch);
+            ps.setString(9, horseData); // can be null or empty if no horse
             ps.executeUpdate();
         } catch (SQLException e) {
             logError("Failed to save player transfer: " + e.getMessage(), e);
         }
     }
 
+    /**
+     * Retrieves the stored location + yaw/pitch + horse data for a player's transfer.
+     */
     public TransferData getTransferData(String uuid) {
         if (connection == null) {
             logError("MySQL connection is null, cannot retrieve transfer data.", null);
             return null;
         }
-        String query = "SELECT destServer, x, y, z, direction, yaw, pitch FROM player_transfer WHERE uuid = ?";
+        String query = "SELECT destServer, x, y, z, direction, yaw, pitch, horseData "
+                + "FROM player_transfer WHERE uuid = ?";
         try (PreparedStatement ps = connection.prepareStatement(query)) {
             ps.setString(1, uuid);
             try (ResultSet rs = ps.executeQuery()) {
@@ -105,7 +131,8 @@ public class MySQLManager {
                             rs.getInt("z"),
                             rs.getString("direction"),
                             rs.getFloat("yaw"),
-                            rs.getFloat("pitch")
+                            rs.getFloat("pitch"),
+                            rs.getString("horseData")
                     );
                 }
             }
@@ -145,13 +172,26 @@ public class MySQLManager {
         }
     }
 
+    /**
+     * Holds all data needed to teleport a player on the destination server, plus horse data.
+     */
     public static class TransferData {
         public String destServer;
         public int x, y, z;
         public String direction;
         public float yaw, pitch;
+        public String horseData; // <-- new field
 
-        public TransferData(String destServer, int x, int y, int z, String direction, float yaw, float pitch) {
+        public TransferData(
+                String destServer,
+                int x,
+                int y,
+                int z,
+                String direction,
+                float yaw,
+                float pitch,
+                String horseData
+        ) {
             this.destServer = destServer;
             this.x = x;
             this.y = y;
@@ -159,6 +199,7 @@ public class MySQLManager {
             this.direction = direction;
             this.yaw = yaw;
             this.pitch = pitch;
+            this.horseData = horseData;
         }
     }
 }

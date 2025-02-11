@@ -1,12 +1,21 @@
 package studio.magemonkey.listeners;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Horse;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import studio.magemonkey.BorderTeleport;
 import studio.magemonkey.database.MySQLManager;
 import studio.magemonkey.handlers.ConfigHandler;
@@ -14,6 +23,8 @@ import studio.magemonkey.handlers.ConfigHandler;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,17 +38,16 @@ public class BorderListener implements Listener {
     private final int currentMaxZ;
     private final String currentRegionKey;
 
-    // For handling cooldowns on repeated transfers
+    // For handling cooldown on repeated transfers
     private final Map<String, Long> pendingTransfers = new HashMap<>();
-
-    // Offset from config
     private final int offset;
+
+    private final Gson gson = new Gson();
 
     public BorderListener(BorderTeleport plugin, MySQLManager mysql) {
         this.plugin = plugin;
         this.mysql = mysql;
 
-        // Current region info
         this.currentRegionKey = ConfigHandler.getCurrentServerName();
         ConfigurationSection regionSection = ConfigHandler.getCurrentRegionSection();
         this.currentMinX = regionSection.getInt("min-x", Integer.MIN_VALUE);
@@ -45,52 +55,29 @@ public class BorderListener implements Listener {
         this.currentMinZ = regionSection.getInt("min-z", Integer.MIN_VALUE);
         this.currentMaxZ = regionSection.getInt("max-z", Integer.MAX_VALUE);
 
-        // Retrieve the offset from config
         this.offset = plugin.getConfig().getInt("teleport.offset", 20);
 
         plugin.getLogger().info("[BorderListener] Initialized for region: " + currentRegionKey
-                + " with boundaries: X[" + currentMinX + ", " + currentMaxX + "] Z["
-                + currentMinZ + ", " + currentMaxZ + "]");
+                + " with boundaries: X[" + currentMinX + ", " + currentMaxX + "] Z[" + currentMinZ + ", " + currentMaxZ + "]");
     }
 
     @EventHandler
     public void onPlayerMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
-        Location from = event.getFrom();
         Location to = event.getTo();
+        if (to == null) return;
 
-        // Debug: Log the movement event
-        if (to != null) {
-            plugin.getLogger().info("[DEBUG] onPlayerMove: " + player.getName()
-                    + " moved from (" + from.getX() + ", " + from.getY() + ", " + from.getZ()
-                    + ", yaw=" + from.getYaw() + ", pitch=" + from.getPitch() + ")"
-                    + " to (" + to.getX() + ", " + to.getY() + ", " + to.getZ()
-                    + ", yaw=" + to.getYaw() + ", pitch=" + to.getPitch() + ")");
-        } else {
-            // If 'to' is null, just exit
-            plugin.getLogger().info("[DEBUG] onPlayerMove: " + player.getName()
-                    + " event.getTo() is null, skipping!");
-            return;
-        }
-
-        // If the player is still in the same region, do nothing
         if (isWithinCurrentRegion(to)) {
-            plugin.getLogger().info("[DEBUG] " + player.getName()
-                    + " remains within region " + currentRegionKey);
             return;
         }
 
         // Identify which region the player is moving into
         String destinationRegionKey = ConfigHandler.getRegionForLocation(to);
-        plugin.getLogger().info("[DEBUG] Destination region key for " + player.getName()
-                + ": " + destinationRegionKey);
-
         if (destinationRegionKey == null || destinationRegionKey.equalsIgnoreCase(currentRegionKey)) {
-            plugin.getLogger().info("[DEBUG] No valid new region (or same) for " + player.getName());
             return;
         }
 
-        // Fetch the corresponding server for that region
+        // Fetch the corresponding server
         ConfigurationSection destSection = plugin.getConfig().getConfigurationSection("regions." + destinationRegionKey);
         if (destSection == null) {
             plugin.getLogger().severe("[BorderListener] No config section for region: " + destinationRegionKey);
@@ -101,8 +88,6 @@ public class BorderListener implements Listener {
             plugin.getLogger().severe("[BorderListener] No server-name defined for region: " + destinationRegionKey);
             return;
         }
-        plugin.getLogger().info("[DEBUG] " + player.getName()
-                + " crossing from " + currentRegionKey + " to server: " + destServer);
 
         // Check cooldown
         String playerId = player.getUniqueId().toString();
@@ -110,45 +95,73 @@ public class BorderListener implements Listener {
         int cooldownSeconds = ConfigHandler.getTeleportRequestTimeout();
         if (pendingTransfers.containsKey(playerId)) {
             long lastRequestTime = pendingTransfers.get(playerId);
-            long diff = currentTime - lastRequestTime;
-            if (diff < cooldownSeconds * 1000L) {
-                plugin.getLogger().info("[DEBUG] Transfer request for " + player.getName()
-                        + " is on cooldown (" + diff + "ms < "
-                        + cooldownSeconds * 1000L + "ms). Skipping!");
+            if (currentTime - lastRequestTime < cooldownSeconds * 1000L) {
                 return;
             }
         }
-
-        // Update the last transfer request time
         pendingTransfers.put(playerId, currentTime);
 
-        // Calculate final coordinates (with offset) before saving to DB
+        // Calculate final coords (with offset)
         Location offsetLoc = to.clone();
         applyOffset(offsetLoc);
 
-        // Capture final yaw/pitch
         float yaw = offsetLoc.getYaw();
         float pitch = offsetLoc.getPitch();
-
         String crossingDirection = getCrossingDirection(to);
 
-        // Debug logging
-        plugin.getLogger().info("[DEBUG] " + player.getName()
-                + " offsetLoc after applyOffset => X=" + offsetLoc.getX()
-                + ", Y=" + offsetLoc.getY() + ", Z=" + offsetLoc.getZ()
-                + ", yaw=" + yaw + ", pitch=" + pitch
-                + ", crossingDirection=" + crossingDirection);
+        // Check if player is riding a horse
+        String serializedHorseData = null;
+        Entity vehicle = player.getVehicle();
+        if (vehicle != null && vehicle instanceof Horse) {
+            Horse horse = (Horse) vehicle;
 
-        // Save data asynchronously, then connect the player once it's saved
+            // Build a JSON object
+            JsonObject obj = new JsonObject();
+            obj.addProperty("color", horse.getColor().name());
+            obj.addProperty("style", horse.getStyle().name());
+
+            // Health
+            obj.addProperty("health", horse.getHealth());
+            double maxHealth = 20.0;
+            if (horse.getAttribute(Attribute.MAX_HEALTH) != null) {
+                maxHealth = horse.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
+            }
+            obj.addProperty("maxHealth", maxHealth);
+
+            // Jump Strength
+            obj.addProperty("jumpStrength", horse.getJumpStrength());
+
+            // Tamed + Owner
+            obj.addProperty("tamed", horse.isTamed());
+            if (horse.getOwner() != null) {
+                obj.addProperty("ownerUUID", horse.getOwner().getUniqueId().toString());
+            }
+
+            // Serialize saddle & armor
+            ItemStack saddle = horse.getInventory().getSaddle();
+            if (saddle != null) {
+                obj.addProperty("saddle", itemStackToJson(saddle));
+            } else {
+                obj.addProperty("saddle", "");
+            }
+
+            ItemStack armor = horse.getInventory().getArmor();
+            if (armor != null) {
+                obj.addProperty("armor", itemStackToJson(armor));
+            } else {
+                obj.addProperty("armor", "");
+            }
+
+            // Convert to string
+            serializedHorseData = gson.toJson(obj);
+
+            // Remove horse from world
+            horse.remove();
+        }
+
+        // Save data asynchronously, then connect player
+        String finalHorseData = serializedHorseData;
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            plugin.getLogger().info("[DEBUG][Async] Saving transfer data for "
-                    + player.getName() + " => server:" + destServer
-                    + " x=" + offsetLoc.getBlockX()
-                    + " y=" + offsetLoc.getBlockY()
-                    + " z=" + offsetLoc.getBlockZ()
-                    + " yaw=" + yaw
-                    + " pitch=" + pitch);
-
             mysql.savePlayerTransfer(
                     player.getUniqueId().toString(),
                     destServer,
@@ -157,30 +170,22 @@ public class BorderListener implements Listener {
                     offsetLoc.getBlockZ(),
                     crossingDirection,
                     yaw,
-                    pitch
+                    pitch,
+                    finalHorseData
             );
 
-            // Switch back to the main thread to send them to the next server
+            // Switch back to main thread to connect them
             Bukkit.getScheduler().runTask(plugin, () -> {
                 if (player.isOnline()) {
-                    plugin.getLogger().info("[DEBUG] Now sending "
-                            + player.getName() + " to server " + destServer);
                     sendPlayerToServer(player, destServer);
-                } else {
-                    plugin.getLogger().info("[DEBUG] " + player.getName()
-                            + " is no longer online, skipping server transfer.");
                 }
             });
         });
     }
 
-    /**
-     * Applies the offset based on which boundary is crossed.
-     */
     private void applyOffset(Location loc) {
         int x = loc.getBlockX();
         int z = loc.getBlockZ();
-
         if (x < currentMinX) {
             loc.setX(x - offset);
         } else if (x > currentMaxX) {
@@ -222,6 +227,23 @@ public class BorderListener implements Listener {
             player.sendPluginMessage(plugin, "BungeeCord", b.toByteArray());
         } catch (IOException e) {
             plugin.getLogger().severe("Error sending plugin message: " + e.getMessage());
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Use ConfigurationSerializable approach to store an ItemStack as JSON
+    // -----------------------------------------------------------------------
+    private String itemStackToJson(ItemStack item) {
+        if (item == null) {
+            return "";
+        }
+        try {
+            // item.serialize() => Map<String, Object>
+            Map<String, Object> serialized = item.serialize();
+            return gson.toJson(serialized);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
         }
     }
 }

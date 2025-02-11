@@ -1,27 +1,38 @@
 package studio.magemonkey.listeners;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.reflect.TypeToken;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
-import org.bukkit.block.Block;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Horse;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.inventory.ItemStack;
 import studio.magemonkey.BorderTeleport;
 import studio.magemonkey.database.MySQLManager;
+
+import java.lang.reflect.Type;
+import java.util.Map;
+import java.util.UUID;
 
 public class TransferJoinListener implements Listener {
     private final BorderTeleport plugin;
     private final MySQLManager mysql;
+    private final Gson gson = new Gson();
 
     public TransferJoinListener(BorderTeleport plugin, MySQLManager mysql) {
         this.plugin = plugin;
         this.mysql = mysql;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
@@ -34,9 +45,9 @@ public class TransferJoinListener implements Listener {
                     plugin.getLogger().info("[DEBUG][Async] Found transfer data for " + player.getName()
                             + " => x=" + data.x + ", y=" + data.y + ", z=" + data.z
                             + ", yaw=" + data.yaw + ", pitch=" + data.pitch
-                            + ", direction=" + data.direction);
+                            + ", direction=" + data.direction
+                            + ", horseData=" + (data.horseData != null));
 
-                    // Switch back to the main thread to teleport
                     Bukkit.getScheduler().runTask(plugin, () -> {
                         if (!player.isOnline()) {
                             plugin.getLogger().info("[DEBUG] " + player.getName()
@@ -44,7 +55,7 @@ public class TransferJoinListener implements Listener {
                             return;
                         }
 
-                        // Reconstruct the stored location, including yaw/pitch
+                        // Teleport player
                         Location newLoc = player.getLocation().clone();
                         newLoc.setX(data.x);
                         newLoc.setY(data.y);
@@ -52,18 +63,12 @@ public class TransferJoinListener implements Listener {
                         newLoc.setYaw(data.yaw);
                         newLoc.setPitch(data.pitch);
 
-                        plugin.getLogger().info("[DEBUG] Original DB location for " + player.getName()
-                                + ": " + newLoc);
+                        player.teleport(newLoc);
 
-                        // Ensure newLoc is safe (not inside a block).
-                        // This method nudges the Y level upward until we find air.
-                        Location safeLoc = findSafeYAbove(newLoc);
-
-                        plugin.getLogger().info("[DEBUG] Final safe location for " + player.getName()
-                                + ": " + safeLoc);
-
-                        // Teleport the player once to the adjusted safe location
-                        player.teleport(safeLoc);
+                        // If there's horse data, spawn a new horse
+                        if (data.horseData != null && !data.horseData.isEmpty()) {
+                            spawnHorseForPlayer(player, data.horseData);
+                        }
 
                         // Delete from DB asynchronously
                         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
@@ -78,49 +83,99 @@ public class TransferJoinListener implements Listener {
         });
     }
 
-    /**
-     * Nudges the Y-level upward until the block at that location is air (non-solid).
-     * This extra logging shows which blocks we encounter while moving up.
-     */
-    private Location findSafeYAbove(Location baseLoc) {
-        Location testLoc = baseLoc.clone();
-        World world = testLoc.getWorld();
-        if (world == null) {
-            // If no world, just return the baseLoc
-            plugin.getLogger().warning("[DEBUG] World is null in findSafeYAbove, returning baseLoc unchanged.");
-            return testLoc;
+    private void spawnHorseForPlayer(Player player, String horseJson) {
+        plugin.getLogger().info("[DEBUG] Re-spawning horse for " + player.getName()
+                + " from data=" + horseJson);
+
+        JsonObject obj = gson.fromJson(horseJson, JsonObject.class);
+        if (obj == null) return;
+
+        // Spawn horse
+        Horse horse = (Horse) player.getWorld().spawnEntity(player.getLocation(), EntityType.HORSE);
+
+        // Re-apply color, style
+        if (obj.has("color")) {
+            horse.setColor(Horse.Color.valueOf(obj.get("color").getAsString()));
+        }
+        if (obj.has("style")) {
+            horse.setStyle(Horse.Style.valueOf(obj.get("style").getAsString()));
         }
 
-        while (true) {
-            Block blockAtFeet = testLoc.getBlock();
-            // You might also consider the player's head block if you have a 2-block-tall entity
-            Block blockAtHead = world.getBlockAt(testLoc.getBlockX(), testLoc.getBlockY() + 1, testLoc.getBlockZ());
-
-            Material feetMat = blockAtFeet.getType();
-            Material headMat = blockAtHead.getType();
-
-            // Log what we see at the feet & head
-            plugin.getLogger().info("[DEBUG] Checking Y=" + testLoc.getBlockY()
-                    + " => feet=" + feetMat + " (solid=" + feetMat.isSolid() + "), "
-                    + "head=" + headMat + " (solid=" + headMat.isSolid() + ")");
-
-            // If neither feet nor head is solid, we've found a safe spot
-            if (!feetMat.isSolid() && !headMat.isSolid()) {
-                plugin.getLogger().info("[DEBUG] Found air at Y=" + testLoc.getBlockY() +
-                        ". This is our safe location.");
-                break;
+        // Health
+        if (obj.has("maxHealth")) {
+            double maxHealth = obj.get("maxHealth").getAsDouble();
+            if (horse.getAttribute(Attribute.MAX_HEALTH) != null) {
+                horse.getAttribute(Attribute.MAX_HEALTH).setBaseValue(maxHealth);
             }
+        }
+        if (obj.has("health")) {
+            horse.setHealth(obj.get("health").getAsDouble());
+        }
 
-            // Otherwise, move up by 1
-            testLoc.add(0, 1, 0);
+        // Jump Strength
+        if (obj.has("jumpStrength")) {
+            horse.setJumpStrength(obj.get("jumpStrength").getAsDouble());
+        }
 
-            // Safety check: if we exceed world height, stop
-            if (testLoc.getY() > world.getMaxHeight()) {
-                plugin.getLogger().warning("[DEBUG] Exceeded max world height while nudging up. Breaking out.");
-                break;
+        // Tamed + Owner
+        boolean isTamed = false;
+        if (obj.has("tamed")) {
+            isTamed = obj.get("tamed").getAsBoolean();
+        }
+        horse.setTamed(isTamed);
+
+        if (obj.has("ownerUUID")) {
+            String ownerStr = obj.get("ownerUUID").getAsString();
+            if (!ownerStr.isEmpty()) {
+                OfflinePlayer op = Bukkit.getOfflinePlayer(UUID.fromString(ownerStr));
+                horse.setOwner(op);
             }
         }
 
-        return testLoc;
+        // Re-apply saddle & armor from JSON
+        if (obj.has("saddle")) {
+            String saddleJson = obj.get("saddle").getAsString();
+            if (!saddleJson.isEmpty()) {
+                ItemStack saddleItem = jsonToItemStack(saddleJson);
+                if (saddleItem != null) {
+                    horse.getInventory().setSaddle(saddleItem);
+                }
+            }
+        }
+
+        if (obj.has("armor")) {
+            String armorJson = obj.get("armor").getAsString();
+            if (!armorJson.isEmpty()) {
+                ItemStack armorItem = jsonToItemStack(armorJson);
+                if (armorItem != null) {
+                    horse.getInventory().setArmor(armorItem);
+                }
+            }
+        }
+
+        // Delay mounting so the entity is fully spawned
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (player.isOnline() && !horse.isDead()) {
+                horse.addPassenger(player);
+            }
+        }, 10L);
+    }
+
+    // -----------------------------------------------------------------------
+    // Use ConfigurationSerializable approach to restore an ItemStack from JSON
+    // -----------------------------------------------------------------------
+    private ItemStack jsonToItemStack(String json) {
+        if (json == null || json.isEmpty()) {
+            return null;
+        }
+        try {
+            Type typeToken = new TypeToken<Map<String, Object>>(){}.getType();
+            Map<String, Object> map = gson.fromJson(json, typeToken);
+            // item deserialize
+            return ItemStack.deserialize(map);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }
